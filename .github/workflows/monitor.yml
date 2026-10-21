@@ -2,8 +2,8 @@ name: Monitor U2 Dates
 
 on:
   schedule:
-    # Executa automaticamente a cada 3 horas
-    - cron: '0 */3 * * *'
+    # Executa automaticamente a cada 30 minutos
+    - cron: '*/30 * * * *'
   # Botão para disparo manual a qualquer momento
   workflow_dispatch:
 
