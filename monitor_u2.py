@@ -19,6 +19,7 @@ URLS_MONITORADAS = {
     "U2Songs - Notícias e Rumores": "https://www.u2songs.com/news/",
     "Ticketmaster Brasil - Busca U2": "https://www.ticketmaster.com.br/event/u2",
     "Google News - U2 Brasil e Ingressos": "https://news.google.com/rss/search?q=U2+(shows+OR+ingressos+OR+Brasil+OR+MorumBIS+OR+precos)&hl=pt-BR&gl=BR&ceid=BR:pt-419",
+    "AllAccess Argentina - Busca U2": "[https://www.allaccess.com.ar/search?q=u2](https://www.allaccess.com.ar/search?q=u2)"
     "Google News - U2 Argentina e River": "https://news.google.com/rss/search?q=U2+(Argentina+OR+entradas+OR+River+OR+Buenos+Aires)&hl=es-419&gl=AR&ceid=AR:es-419"
 }
 
