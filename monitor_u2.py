@@ -12,14 +12,16 @@ CHAT_IDS = [cid.strip() for cid in CHAT_IDS_RAW.split(",") if cid.strip()]
 
 STATE_FILE = "u2_tour_state.json"
 
-# Fontes monitoradas: Sites oficiais, notícias e portais de bilheteria
+# Fontes monitoradas: Sites oficiais, notícias, bilheterias e Instagram
 URLS_MONITORADAS = {
     "U2.com - Tours": "https://www.u2.com/pages/tours",
     "U2.com - News Geral": "https://www.u2.com/news",
     "U2Songs - Notícias e Rumores": "https://www.u2songs.com/news/",
     "Ticketmaster Brasil - Busca U2": "https://www.ticketmaster.com.br/event/u2",
+    "AllAccess Argentina - Busca U2": "https://www.allaccess.com.ar/search?q=u2",
+    "Instagram - @u2.wolves": "https://www.instagram.com/u2.wolves/",
+    "Instagram - @u2br": "https://www.instagram.com/u2br/",
     "Google News - U2 Brasil e Ingressos": "https://news.google.com/rss/search?q=U2+(shows+OR+ingressos+OR+Brasil+OR+MorumBIS+OR+precos)&hl=pt-BR&gl=BR&ceid=BR:pt-419",
-    "AllAccess Argentina - Busca U2": "[https://www.allaccess.com.ar/search?q=u2](https://www.allaccess.com.ar/search?q=u2)"
     "Google News - U2 Argentina e River": "https://news.google.com/rss/search?q=U2+(Argentina+OR+entradas+OR+River+OR+Buenos+Aires)&hl=es-419&gl=AR&ceid=AR:es-419"
 }
 
@@ -97,18 +99,33 @@ def extrair_trechos_relevantes(texto):
 
 def obter_conteudo_pagina(url):
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+        "Accept-Language": "pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7"
     }
+    
+    # Cabeçalho otimizado para ler metatags de perfis do Instagram
+    if "instagram.com" in url:
+        headers["User-Agent"] = "Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1"
+
     try:
         r = requests.get(url, headers=headers, timeout=20)
         if r.status_code == 200:
             soup = BeautifulSoup(r.text, "html.parser" if not url.endswith((".rss", "=pt-419", "=es-419")) else "xml")
             
+            # Para o Instagram, focar nas metatags OpenGraph que contêm a bio e últimos posts
+            if "instagram.com" in url:
+                metas = soup.find_all("meta", property=lambda x: x and ("og:description" in x or "og:title" in x))
+                meta_texto = " ".join([m.get("content", "") for m in metas if m.get("content")])
+                if meta_texto:
+                    return meta_texto
+
             for tag in soup(["script", "style", "noscript", "svg", "header", "footer", "nav"]):
                 tag.decompose()
                 
             texto_completo = soup.get_text(separator="\n")
             return texto_completo
+        else:
+            print(f"Status {r.status_code} ao acessar {url}")
     except Exception as e:
         print(f"Erro ao acessar {url}: {e}")
     return None
@@ -155,6 +172,8 @@ def monitorar():
                 cabecalho = "🇧🇷🇦🇷 <b>ALERTA: NOTÍCIAS DE SHOWS NA AMÉRICA DO SUL (MARÇO/2027)</b>"
             elif item["tem_ingressos"]:
                 cabecalho = "🎟️ <b>ALERTA DE INGRESSOS / VALORES DO U2!</b>"
+            elif "Instagram" in item["fonte"]:
+                cabecalho = "📸 <b>NOVA POSTAGEM NO INSTAGRAM DO U2!</b>"
             else:
                 cabecalho = "📢 <b>ATUALIZAÇÃO GERAL: U2 TOUR</b>"
 
@@ -167,7 +186,7 @@ def monitorar():
                 f"<b>Fonte:</b> {item['fonte']}\n"
                 f"🔗 {item['url']}"
                 f"{texto_trechos}\n\n"
-                f"<i>Acesse o link para conferir lotes, datas e valores confirmados.</i>"
+                f"<i>Acesse o link para conferir as informações atualizadas.</i>"
             )
             enviar_telegram(msg)
     else:
